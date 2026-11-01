@@ -1,0 +1,16 @@
+[tasks.run]
+description = "Run the native macOS menu-bar app"
+run = "cargo run -p kvmon-macos"
+
+[tasks.probe]
+description = "Discover the Dell monitor and read its input (no writes)"
+run = "cargo run -p kvmon-macos -- --probe"
+
+[tasks.bundle]
+description = "Build target/release/kvmon.app"
+run = "bash scripts/bundle.sh"
+
+[tasks.open]
+description = "Build and open kvmon.app"
+depends = ["bundle"]
+run = "open ../../target/release/kvmon.app"

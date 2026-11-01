@@ -10,6 +10,18 @@ config_roots = ["pkgs/*"]
 
 # ...
 
+[tasks.fmt]
+description = "Format Rust workspace"
+run = "cargo fmt --all"
+
+[tasks.check]
+description = "Check formatting and lint Rust workspace"
+run = ["cargo fmt --all -- --check", "cargo clippy --workspace --all-targets -- -D warnings"]
+
+[tasks.test]
+description = "Test shared behavior and backend parsers (no hardware writes)"
+run = "cargo test --workspace"
+
 
 # Settings #####################################################################
 
