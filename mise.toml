@@ -1,0 +1,18 @@
+# Monorepo #####################################################################
+
+monorepo_root = true
+[monorepo]
+config_roots = ["pkgs/*"]
+
+[tools]
+
+# Stack ########################################################################
+
+# ...
+
+
+# Settings #####################################################################
+
+[settings]
+lockfile = true
+idiomatic_version_file_enable_tools = ["rust"] # Use rust-toolchain.toml
