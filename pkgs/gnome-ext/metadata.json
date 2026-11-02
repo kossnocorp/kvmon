@@ -1,0 +1,7 @@
+{
+  "uuid": "kvmon@kvmon.local",
+  "name": "KVM",
+  "description": "Switch the Dell U4025QW between computers from Quick Settings.",
+  "shell-version": ["50"],
+  "version": 1
+}

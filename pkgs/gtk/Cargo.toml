@@ -1,0 +1,10 @@
+[package]
+name = "kvmon-gtk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+kvmon-core.workspace = true
+gio = "0.21"
+glib = "0.21"

@@ -1,5 +1,5 @@
 [workspace]
-members = ["pkgs/core", "pkgs/macos"]
+members = ["pkgs/core", "pkgs/macos", "pkgs/gtk"]
 resolver = "3"
 
 [workspace.package]

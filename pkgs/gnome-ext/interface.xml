@@ -1,0 +1,21 @@
+<node>
+  <interface name="io.github.kvmon.Monitor">
+    <method name="GetState">
+      <arg name="status" type="s" direction="out"/>
+      <arg name="message" type="s" direction="out"/>
+      <arg name="activeInput" type="u" direction="out"/>
+      <arg name="computers" type="a(su)" direction="out"/>
+      <arg name="quitLabel" type="s" direction="out"/>
+    </method>
+    <method name="Refresh"/>
+    <method name="Select"><arg name="input" type="u" direction="in"/></method>
+    <method name="Quit"/>
+    <signal name="Changed">
+      <arg name="status" type="s"/>
+      <arg name="message" type="s"/>
+      <arg name="activeInput" type="u"/>
+      <arg name="computers" type="a(su)"/>
+      <arg name="quitLabel" type="s"/>
+    </signal>
+  </interface>
+</node>

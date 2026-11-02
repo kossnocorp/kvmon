@@ -1,0 +1,11 @@
+[tasks.install]
+description = "Build and install the Quick Settings extension and D-Bus service for this user"
+run = "bash scripts/install.sh"
+
+[tasks.enable]
+description = "Enable KVM in GNOME Quick Settings (log in again after first install)"
+run = "gnome-extensions enable kvmon@kvmon.local"
+
+[tasks.pack]
+description = "Package the Shell extension (Rust service installed separately)"
+run = "gnome-extensions pack --force --extra-source=interface.xml --out-dir=../../target ."

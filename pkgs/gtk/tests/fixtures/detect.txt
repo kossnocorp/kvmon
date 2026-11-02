@@ -1,0 +1,24 @@
+Display 1
+   I2C bus: /dev/i2c-3
+   Mfg id: ACR
+   Model: Other Display
+   Serial number: OTHER
+
+Display 2
+   I2C bus: /dev/i2c-8
+   EDID synopsis:
+      Mfg id: DEL - Dell Inc.
+      Model: DELL U4025QW
+      Serial number: 7P3G684
+
+Invalid display
+   I2C bus: /dev/i2c-9
+   Mfg id: DEL
+   Model: DELL U4025QW
+   Serial number: INVALID
+
+Display 3
+   I2C bus: /dev/i2c-12
+   Mfg id: DEL
+   Model: DELL U4025QW
+   Serial number: SECOND

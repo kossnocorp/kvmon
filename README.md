@@ -1,7 +1,7 @@
 # kvmon
 
-A native Rust macOS menu-bar app for the Dell U4025QW's KVM. Click **KVM** in
-the menu bar, then **MacBook** (Thunderbolt) or **Fedora PC** (DisplayPort).
+A native Rust KVM switcher for the Dell U4025QW on macOS and GNOME. Click **KVM** in
+the macOS menu bar or GNOME Quick Settings, then **MacBook** (Thunderbolt) or **Fedora PC** (DisplayPort).
 The observed active input is checked and listed first. **Quit** exits the app.
 
 ## Run on macOS
@@ -26,7 +26,55 @@ The locally ad-hoc-signed bundle is `target/release/kvmon.app`; copy it to
 `/Applications` if desired. It still requires an installed `m1ddc`. The bundle
 runs without a Dock icon. Quit an existing instance before starting another.
 
-## Monitor behavior
+## Run on Fedora / GNOME
+
+The GNOME Shell 50 extension adds a **KVM** tile beside Wi-Fi, Bluetooth, and
+sound in Quick Settings. Its dropdown lists the configured computers, checks the
+observed input, and includes **Quit**. Quit stops the service and disables the
+extension; enable it again to restart.
+
+The UI uses GNOME Shell's native Quick Settings widgets (GJS). Monitor control
+is a background Rust service using gtk-rs' `gio` and `glib` crates over the session
+bus. GTK widgets cannot be embedded in Shell's Quick Settings, so no separate
+GTK window is needed. The service is activated automatically by D-Bus.
+
+```sh
+sudo dnf install gcc glib2-devel pkgconf-pkg-config ddcutil python3
+mise install
+mise run //pkgs/gtk:probe       # read-only; run without sudo to check permissions
+mise run //pkgs/gnome-ext:install
+# Log out and back in after the first installation so Shell discovers the extension.
+mise run //pkgs/gnome-ext:enable
+```
+
+Enable DDC/CI in the monitor OSD. The service needs user access to `/dev/i2c-*`.
+Fedora's ddcutil package supplies udev access rules; load `i2c-dev` with
+`sudo modprobe i2c-dev` if the devices are absent. If your distribution uses an
+`i2c` group instead of session `uaccess`, add your user to that existing group
+(`sudo usermod -aG i2c "$USER"`) and log in again. Verify the read-only probe works
+as your normal user; the UI never runs sudo. Do not make I2C devices world-writable.
+
+Install locations (under `${XDG_DATA_HOME:-~/.local/share}`):
+`gnome-shell/extensions/kvmon@kvmon.local`, `kvmon/kvmon-gtk`, and
+`dbus-1/services/io.github.kvmon.Monitor.service`. To remove, disable the extension
+with `gnome-extensions disable kvmon@kvmon.local`, stop the service with
+`gdbus call --session --dest io.github.kvmon.Monitor --object-path /io/github/kvmon/Monitor --method io.github.kvmon.Monitor.Quit`,
+then remove those three paths.
+
+Linux discovers the Dell by manufacturer/model and current I2C bus each operation;
+no bus number is hardcoded. Set `KVMON_DISPLAY_SERIAL` when more than one matching
+Dell is connected, or `KVMON_DDCUTIL` for an alternate executable. For debugging,
+stop the existing service, then run these environment variables with
+`mise run //pkgs/gtk:run`. D-Bus activation uses the session bus's environment,
+not variables from an arbitrary terminal.
+
+The service refreshes at startup, on submenu open, and every ten seconds for
+reconnect/wake recovery. DDC commands are serialized on a worker, each with an
+eight-second timeout. A successful write is read back before checking an input;
+loss of monitor access shows an error rather than an unverified checkmark.
+Unknown inputs remain selectable to recover to a configured computer.
+
+## macOS monitor behavior
 
 - Uses `m1ddc` for DDC/CI VCP `0x60`, selected by discovered UUID rather than index.
 - Reads at startup, on menu open, and every 10 seconds (also recovers after wake).
@@ -58,9 +106,20 @@ mise run test
 ```
 
 `pkgs/core` contains platform-independent traits, profile/copy, and state behavior;
-`pkgs/macos` uses `objc2` AppKit bindings. `pkgs/gtk` and `pkgs/gnome-ext` are
-reserved for Fedora development. Tests use fixtures/fakes and never switch hardware.
-On Fedora, use `mise exec -- cargo test -p kvmon-core` for the shared library.
+`pkgs/macos` uses `objc2` AppKit bindings. `pkgs/gtk` implements the Linux ddcutil
+backend and gtk-rs GIO service; `pkgs/gnome-ext` implements the Quick Settings UI.
+Their small typed D-Bus contract is `pkgs/gnome-ext/interface.xml`: `GetState`,
+`Refresh`, `Select`, `Quit`, and `Changed` snapshots including shared labels.
+Tests use fixtures/fakes and never switch hardware. Run
+`mise run //pkgs/gtk:smoke` for an isolated D-Bus/fake-monitor integration check.
+`mise run //pkgs/gnome-ext:pack` creates an extension zip in `target/`; recipients
+also need the Rust service installed. The discovery fixture is representative
+ddcutil output, not a new hardware verification.
+
+Manual GNOME check: open Quick Settings → KVM, check the observed input, intentionally
+switch to MacBook and back, then test disconnect/reconnect, sleep/wake, missing
+ddcutil/device permissions, Quit, and re-enable. Shell UI and real switching require
+testing in a logged-in GNOME session; Rust tests alone do not verify that UI.
 
 Manual macOS check: open the menu, verify MacBook is checked, select Fedora PC,
 then switch back from Fedora using `ddcutil setvcp 0x60 0x19` on the detected bus.

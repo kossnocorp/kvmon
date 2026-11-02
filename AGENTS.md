@@ -14,7 +14,7 @@ extension. Work on each frontend independently, sharing semantics and UI copy.
 - `pkgs/gnome-ext`: GNOME Shell extension (GJS); not a Cargo member unless it has
   a Rust companion. Define a small IPC boundary if it needs Rust functionality.
 
-Core and macOS are implemented; GTK and GNOME extension directories are reserved.
+Core, macOS, and the Linux service/GNOME extension are implemented.
 Use `pkgs/` rather than root-level package directories.
 
 ## UX and behavior
@@ -84,6 +84,16 @@ when their mappings/behavior are known; do not assume Dell's `0x19` is universal
   as implemented. Run tools via `mise exec -- …` when needed.
 - Tasks: root `fmt`, `check`, `test`; `//pkgs/macos:run`, `:probe` (read-only),
   `:bundle`, `:open`. Bundle output: `target/release/kvmon.app`; requires m1ddc.
+- Linux: `pkgs/gtk` uses gtk-rs GIO/GLib for a session D-Bus service with serialized
+  ddcutil work and eight-second command timeouts. No standalone window: GJS in
+  `pkgs/gnome-ext` supplies a GNOME Shell 50 Quick Settings tile/submenu. Contract:
+  `pkgs/gnome-ext/interface.xml`; profiles/labels come from Rust. Quit stops the
+  service and disables the extension. D-Bus activates the service on next enable.
+- Linux tasks: `//pkgs/gtk:run`, `:probe` (read-only), `:build`, `:smoke` (isolated
+  D-Bus with fake hardware); `//pkgs/gnome-ext:install`, `:enable`, `:pack`.
+  Discovery uses Dell manufacturer/model and optional `KVMON_DISPLAY_SERIAL`,
+  never a fixed bus. `KVMON_DDCUTIL` overrides the command. Document user I2C access;
+  never invoke sudo from the service. Linux fixture tests do not verify hardware.
 - Keep platform dependencies target-gated so core builds/tests on both OSes.
   Check the relevant frontend on its native OS; don't claim cross-platform UI
   verification from a core-only build.
