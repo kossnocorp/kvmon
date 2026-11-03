@@ -11,6 +11,7 @@ pub struct Input(pub u16);
 #[derive(Clone, Copy, Debug)]
 pub struct Computer {
     pub name: &'static str,
+    pub port: &'static str,
     pub input: Input,
 }
 
@@ -24,10 +25,12 @@ pub const DELL_U4025QW: MonitorProfile = MonitorProfile {
     computers: &[
         Computer {
             name: "MacBook",
+            port: "Thunderbolt",
             input: Input(0x19),
         },
         Computer {
             name: "Fedora PC",
+            port: "DisplayPort-1",
             input: Input(0x0f),
         },
     ],

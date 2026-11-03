@@ -10,6 +10,10 @@ run = "cargo run -p kvmon-gtk -- --probe"
 description = "Build the Rust GNOME service"
 run = "cargo build --release -p kvmon-gtk"
 
+[tasks.settings]
+description = "Open the native connection-name settings window"
+run = "cargo run -p kvmon-gtk -- --settings"
+
 [tasks.smoke]
 description = "Exercise D-Bus with a fake monitor in an isolated session"
 run = "python3 scripts/smoke.py"

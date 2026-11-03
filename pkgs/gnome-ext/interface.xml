@@ -8,6 +8,15 @@
       <arg name="quitLabel" type="s" direction="out"/>
     </method>
     <method name="Refresh"/>
+    <method name="GetMonitor">
+      <arg name="model" type="s" direction="out"/>
+      <arg name="bus" type="s" direction="out"/>
+    </method>
+    <method name="Settings"/>
+    <method name="SetAlias">
+      <arg name="input" type="u" direction="in"/>
+      <arg name="alias" type="s" direction="in"/>
+    </method>
     <method name="Select"><arg name="input" type="u" direction="in"/></method>
     <method name="Quit"/>
     <signal name="Changed">

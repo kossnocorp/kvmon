@@ -33,13 +33,28 @@ sound in Quick Settings. Its dropdown lists the configured computers, checks the
 observed input, and includes **Quit**. Quit stops the service and disables the
 extension; enable it again to restart.
 
+Choose **Settings…** in the KVM submenu to open the native GTK4/libadwaita
+preferences window. Double-click a connection or use its Edit button, then press
+Enter or Save to commit; Escape or Cancel discards the edit. Empty or whitespace-only
+names restore the port-name placeholder (Thunderbolt or DisplayPort-1, from the
+verified Dell profile). DDC/CI does not report connected computers' hostnames.
+The monitor card shows the discovered model and current I2C bus, or an explicit
+unavailable state. Aliases are stored by input in
+`${XDG_CONFIG_HOME:-~/.config}/kvmon/connections.json` and update Quick Settings
+immediately. These are Linux-local aliases; monitor input mappings remain unchanged.
+The settings window can also be opened with `mise run //pkgs/gtk:settings`.
+
+After updating an existing installation, Quit KVM before reinstalling, then log out
+and back in to reload the extension code and enable it again.
+
 The UI uses GNOME Shell's native Quick Settings widgets (GJS). Monitor control
 is a background Rust service using gtk-rs' `gio` and `glib` crates over the session
 bus. GTK widgets cannot be embedded in Shell's Quick Settings, so no separate
-GTK window is needed. The service is activated automatically by D-Bus.
+GTK window is needed for switching; a GTK4/libadwaita window handles preferences.
+The service is activated automatically by D-Bus.
 
 ```sh
-sudo dnf install gcc glib2-devel pkgconf-pkg-config ddcutil python3
+sudo dnf install gcc glib2-devel gtk4-devel libadwaita-devel pkgconf-pkg-config ddcutil python3
 mise install
 mise run //pkgs/gtk:probe       # read-only; run without sudo to check permissions
 mise run //pkgs/gnome-ext:install
@@ -109,7 +124,7 @@ mise run test
 `pkgs/macos` uses `objc2` AppKit bindings. `pkgs/gtk` implements the Linux ddcutil
 backend and gtk-rs GIO service; `pkgs/gnome-ext` implements the Quick Settings UI.
 Their small typed D-Bus contract is `pkgs/gnome-ext/interface.xml`: `GetState`,
-`Refresh`, `Select`, `Quit`, and `Changed` snapshots including shared labels.
+`Refresh`, `Select`, `Quit`, `Settings`, `SetAlias`, and `Changed` snapshots including resolved labels.
 Tests use fixtures/fakes and never switch hardware. Run
 `mise run //pkgs/gtk:smoke` for an isolated D-Bus/fake-monitor integration check.
 `mise run //pkgs/gnome-ext:pack` creates an extension zip in `target/`; recipients

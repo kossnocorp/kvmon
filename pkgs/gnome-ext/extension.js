@@ -26,7 +26,8 @@ export default class KvmExtension extends Extension {
         this._toggle = new KvmToggle();
         this._indicator.quickSettingsItems.push(this._toggle);
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
-        this._showError('Checking monitor…');
+        this._buildMenu();
+        this._render(['checking', 'Loading…', 0, [], 'Quit']);
         this._toggle.menu.connect('open-state-changed', (_menu, open) => {
             if (open && this._proxy?.g_name_owner)
                 this._call('Refresh');
@@ -69,33 +70,60 @@ export default class KvmExtension extends Extension {
     }
 
     _showError(message) {
-        this._render(['unavailable', message, 0, [], 'Quit']);
+        this._render(['unavailable', message, 0, this._computers ?? [], 'Quit']);
     }
 
     _render([status, message, active, computers, quitLabel]) {
+        this._computers = computers;
+        this._status = status;
+        this._active = active;
+        if (status === 'checking')
+            message = 'Loading…';
         this._toggle.subtitle = status === 'ready' ? message : 'Unavailable';
         this._toggle.checked = status === 'ready';
-        this._toggle.menu.removeAll();
-        if (status !== 'ready' || !computers.some(([, input]) => input === active)) {
-            const item = new PopupMenu.PopupMenuItem(message, {reactive: false});
-            this._toggle.menu.addMenuItem(item);
-            if (status === 'checking' || status === 'switching')
-                this._toggle.subtitle = message;
+        this._message.label.text = message;
+        this._message.visible = status !== 'ready' || !computers.some(([, input]) => input === active);
+        if (status === 'checking' || status === 'switching')
+            this._toggle.subtitle = message;
+        // Keep row actors and their order stable across refreshes (including keyboard focus).
+        for (const [input, item] of this._items) {
+            if (!computers.some(([, value]) => value === input)) {
+                item.destroy();
+                this._items.delete(input);
+            }
         }
-        computers.sort((a, b) => Number(b[1] === active) - Number(a[1] === active));
         for (const [label, input] of computers) {
-            const item = new PopupMenu.PopupMenuItem(label);
+            let item = this._items.get(input);
+            if (!item) {
+                item = new PopupMenu.PopupMenuItem(label);
+                item.connect('activate', () => {
+                    if (this._status === 'ready' && input !== this._active)
+                        this._call('Select', new GLib.Variant('(u)', [input]));
+                });
+                this._items.set(input, item);
+                this._connections.addMenuItem(item);
+            }
+            item.label.text = label;
             item.setOrnament(status === 'ready' && input === active
                 ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
             item.setSensitive(status === 'ready');
-            item.connect('activate', () => {
-                if (input !== active)
-                    this._call('Select', new GLib.Variant('(u)', [input]));
-            });
-            this._toggle.menu.addMenuItem(item);
         }
+        this._quit.label.text = quitLabel;
+    }
+
+    _buildMenu() {
+        this._items = new Map();
+        this._computers = [];
+        this._message = new PopupMenu.PopupMenuItem('Loading…', {reactive: false});
+        this._toggle.menu.addMenuItem(this._message);
+        this._connections = new PopupMenu.PopupMenuSection();
+        this._toggle.menu.addMenuItem(this._connections);
         this._toggle.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        const quit = new PopupMenu.PopupMenuItem(quitLabel);
+        const settings = new PopupMenu.PopupMenuItem('Settings…');
+        settings.connect('activate', () => this._call('Settings'));
+        this._toggle.menu.addMenuItem(settings);
+        const quit = new PopupMenu.PopupMenuItem('Quit');
+        this._quit = quit;
         quit.connect('activate', () => {
             this._quitting = true;
             // Wait for the reply before disable() cancels outstanding calls.
@@ -132,5 +160,10 @@ export default class KvmExtension extends Extension {
         this._indicator.destroy();
         this._toggle = null;
         this._indicator = null;
+        this._items.clear();
+        this._computers = [];
+        this._connections = null;
+        this._message = null;
+        this._quit = null;
     }
 }

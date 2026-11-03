@@ -1,10 +1,18 @@
 #[cfg(target_os = "linux")]
+mod aliases;
+#[cfg(target_os = "linux")]
 mod backend;
 #[cfg(target_os = "linux")]
 mod service;
+#[cfg(target_os = "linux")]
+mod settings;
 
 #[cfg(target_os = "linux")]
 fn main() {
+    if std::env::args().any(|arg| arg == "--settings") {
+        settings::run();
+        return;
+    }
     if std::env::args().any(|arg| arg == "--probe") {
         use kvmon_core::MonitorBackend;
         let mut backend = backend::Ddcutil::new();

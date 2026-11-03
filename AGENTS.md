@@ -85,10 +85,19 @@ when their mappings/behavior are known; do not assume Dell's `0x19` is universal
 - Tasks: root `fmt`, `check`, `test`; `//pkgs/macos:run`, `:probe` (read-only),
   `:bundle`, `:open`. Bundle output: `target/release/kvmon.app`; requires m1ddc.
 - Linux: `pkgs/gtk` uses gtk-rs GIO/GLib for a session D-Bus service with serialized
-  ddcutil work and eight-second command timeouts. No standalone window: GJS in
-  `pkgs/gnome-ext` supplies a GNOME Shell 50 Quick Settings tile/submenu. Contract:
+  ddcutil work and eight-second command timeouts. Switching uses GJS in
+  `pkgs/gnome-ext` for a GNOME Shell 50 Quick Settings tile/submenu. Contract:
   `pkgs/gnome-ext/interface.xml`; profiles/labels come from Rust. Quit stops the
   service and disables the extension. D-Bus activates the service on next enable.
+- GTK4/libadwaita preferences (`//pkgs/gtk:settings` or submenu Settings) edit
+  Linux-local aliases in `$XDG_CONFIG_HOME/kvmon/connections.json`. Empty aliases
+  restore shared profile port names on Linux; macOS retains its computer labels.
+  DDC/CI does not expose remote hostnames. `GetMonitor` supplies discovered model/bus
+  for the preferences card. `SetAlias` persists atomically and publishes labels;
+  input mappings stay in core. Settings requires GTK4 and libadwaita development libs.
+- Linux refreshes retain the last result while reading; Loading appears only before
+  the first result. Quick Settings updates stable rows in profile order, without
+  rebuilding/reordering on refresh. Writes still require readback confirmation.
 - Linux tasks: `//pkgs/gtk:run`, `:probe` (read-only), `:build`, `:smoke` (isolated
   D-Bus with fake hardware); `//pkgs/gnome-ext:install`, `:enable`, `:pack`.
   Discovery uses Dell manufacturer/model and optional `KVMON_DISPLAY_SERIAL`,

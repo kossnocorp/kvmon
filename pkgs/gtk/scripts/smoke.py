@@ -45,6 +45,8 @@ if (p / "disconnected").exists():
 if args == ["detect"]:
     print("Display 1\\n I2C bus: /dev/i2c-42\\n Mfg id: DEL\\n Model: DELL U4025QW\\n Serial number: FAKE")
 elif "getvcp" in args:
+    if (p / "slow-read").exists():
+        time.sleep(0.3)
     print("VCP 60 SNC x" + (p / "input").read_text())
 elif "setvcp" in args:
     with (p / "writes").open("a") as log:
@@ -59,19 +61,37 @@ else:
 ''')
         fake.chmod(0o755)
         (tmp / "input").write_text("0f")
-        env = dict(os.environ, KVMON_DDCUTIL=str(fake), FAKE_MONITOR=str(tmp))
+        env = dict(os.environ, KVMON_DDCUTIL=str(fake), FAKE_MONITOR=str(tmp), XDG_CONFIG_HOME=str(tmp / "config"))
         env.pop("KVMON_DISPLAY_SERIAL", None)
         process = subprocess.Popen([str(ROOT / "target/debug/kvmon-gtk")], env=env)
         try:
             state = wait_for("'ready'")
-            assert "uint32 15" in state and "MacBook" in state and "Fedora PC" in state
+            assert "uint32 15" in state and "Thunderbolt" in state and "DisplayPort-1" in state
+            assert "DELL U4025QW" in call("GetMonitor").stdout
+            assert "42" in call("GetMonitor").stdout
+            call("SetAlias", "25", "Work laptop")
+            assert "Work laptop" in call("GetState").stdout
+            assert call("SetAlias", "17", "Unknown", check=False).returncode != 0
+            call("SetAlias", "25", "")
+            assert "Thunderbolt" in call("GetState").stdout
+            call("SetAlias", "15", "Desktop")
+            assert "Desktop" in call("GetState").stdout
+            (tmp / "slow-read").touch()
+            call("Refresh")
+            assert "'ready'" in call("GetState").stdout, "Refresh must retain observed state"
+            assert "Desktop" in call("GetState").stdout
+            time.sleep(0.5)
+            (tmp / "slow-read").unlink()
             call("Select", "15")
             assert not (tmp / "writes").exists(), "Active selection must not write"
             assert call("Select", "17", check=False).returncode != 0
+            (tmp / "slow-read").touch()
+            call("Refresh")
             call("Select", "25")
             assert "'switching'" in call("GetState").stdout
             assert call("Select", "15", check=False).returncode != 0
             assert "uint32 25" in wait_for("'ready'")
+            (tmp / "slow-read").unlink()
             (tmp / "lose-on-write").touch()
             call("Select", "15")
             state = wait_for("'unavailable'")
@@ -80,6 +100,10 @@ else:
             call("Refresh")
             assert "uint32 25" in wait_for("'ready'")
             assert (tmp / "writes").read_text().splitlines() == ["0x19", "0x0f"]
+            call("Quit")
+            assert process.wait(timeout=5) == 0
+            process = subprocess.Popen([str(ROOT / "target/debug/kvmon-gtk")], env=env)
+            assert "Desktop" in wait_for("'ready'")
             call("Quit")
             assert process.wait(timeout=5) == 0
         finally:
@@ -94,4 +118,7 @@ if __name__ == "__main__":
         test()
     else:
         subprocess.run(["cargo", "build", "-p", "kvmon-gtk"], cwd=ROOT, check=True)
-        subprocess.run(["dbus-run-session", "--", sys.executable, __file__, "--isolated"], check=True)
+        # Hide any installed activation file before starting the isolated bus.
+        with tempfile.TemporaryDirectory(prefix="kvmon-bus-") as data:
+            subprocess.run(["dbus-run-session", "--", sys.executable, __file__, "--isolated"],
+                           env=dict(os.environ, XDG_DATA_HOME=data), check=True)
