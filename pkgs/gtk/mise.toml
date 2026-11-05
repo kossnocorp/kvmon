@@ -1,3 +1,10 @@
+[bootstrap.packages]
+"dnf:gcc" = "latest"
+"dnf:glib2-devel" = "latest"
+"dnf:gtk4-devel" = "latest"
+"dnf:libadwaita-devel" = "latest"
+"dnf:pkgconf-pkg-config" = "latest"
+
 [tasks.run]
 description = "Run the GNOME monitor service"
 run = "cargo run -p kvmon-gtk"
