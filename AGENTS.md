@@ -86,7 +86,7 @@ when their mappings/behavior are known; do not assume Dell's `0x19` is universal
   `:bundle`, `:open`. Bundle output: `target/release/kvmon.app`; requires m1ddc.
 - Linux: `pkgs/gtk` uses gtk-rs GIO/GLib for a session D-Bus service with serialized
   ddcutil work and eight-second command timeouts. Switching uses GJS in
-  `pkgs/gnome-ext` for a GNOME Shell 50 Quick Settings tile/submenu. Contract:
+  `pkgs/gnome-ext` for a GNOME Shell 50/51 Quick Settings tile/submenu. Contract:
   `pkgs/gnome-ext/interface.xml`; profiles/labels come from Rust. Quit stops the
   service and disables the extension. D-Bus activates the service on next enable.
 - GTK4/libadwaita preferences (`//pkgs/gtk:settings` or submenu Settings) edit

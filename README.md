@@ -28,7 +28,7 @@ runs without a Dock icon. Quit an existing instance before starting another.
 
 ## Run on Fedora / GNOME
 
-The GNOME Shell 50 extension adds a **KVM** tile beside Wi-Fi, Bluetooth, and
+The GNOME Shell 50/51 extension adds a **KVM** tile beside Wi-Fi, Bluetooth, and
 sound in Quick Settings. Its dropdown lists the configured computers, checks the
 observed input, and includes **Quit**. Quit stops the service and disables the
 extension; enable it again to restart.
@@ -46,6 +46,10 @@ The settings window can also be opened with `mise run //pkgs/gtk:settings`.
 
 After updating an existing installation, Quit KVM before reinstalling, then log out
 and back in to reload the extension code and enable it again.
+
+If a GNOME upgrade marks KVM as **Out of Date**, reinstall a version supporting
+your new Shell version, then log out and back in. If the KVM menu is unavailable,
+skip the Quit step. Keep Shell's extension version validation enabled.
 
 The UI uses GNOME Shell's native Quick Settings widgets (GJS). Monitor control
 is a background Rust service using gtk-rs' `gio` and `glib` crates over the session
